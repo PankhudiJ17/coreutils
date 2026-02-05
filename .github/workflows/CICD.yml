@@ -619,7 +619,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: ppc64le 
+        arch:
+          - ppc64le 
         job:
           # - { os , target , cargo-options , default-features,  features , use-cross , toolchain, skip-tests, workspace-tests, skip-package, skip-publish }
           - { os: ubuntu-latest  , target: arm-unknown-linux-gnueabihf , features: feat_os_unix_gnueabihf , use-cross: use-cross , skip-tests: true }
