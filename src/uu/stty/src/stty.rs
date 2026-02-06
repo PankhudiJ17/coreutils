@@ -21,8 +21,8 @@ use crate::flags::COMBINATION_SETTINGS;
 use clap::{Arg, ArgAction, ArgMatches, Command};
 use nix::libc::{O_NONBLOCK, TIOCGWINSZ, TIOCSWINSZ, c_ushort};
 
-//#[cfg(target_os = "linux")]
-#[cfg(any(not(target_os = "linux"), target_arch = "powerpc64"))]
+#[cfg(target_os = "linux")]
+//#[cfg(any(not(target_os = "linux"), target_arch = "powerpc64"))]
 use nix::libc::{TCGETS2, termios2};
 
 use nix::sys::termios::{
