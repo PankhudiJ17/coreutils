@@ -647,7 +647,8 @@ fn print_terminal_size(
     let mut printer = WrappedPrinter::new(window_size);
 
     // BSDs and Linux use a u32 for the baud rate, so we can simply print it.
-    #[cfg(any(target_os = "linux", bsd))]
+    //#[cfg(any(target_os = "linux", bsd))]
+    #[cfg(any(bsd, all(target_os = "linux", not(target_arch = "powerpc64"))))]
     printer.print(&translate!("stty-output-speed", "speed" => speed));
 
     // Other platforms need to use the baud rate enum, so printing the right value
