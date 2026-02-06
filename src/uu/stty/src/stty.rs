@@ -21,7 +21,8 @@ use crate::flags::COMBINATION_SETTINGS;
 use clap::{Arg, ArgAction, ArgMatches, Command};
 use nix::libc::{O_NONBLOCK, TIOCGWINSZ, TIOCSWINSZ, c_ushort};
 
-#[cfg(target_os = "linux")]
+//#[cfg(target_os = "linux")]
+#[cfg(any(not(target_os = "linux"), target_arch = "powerpc64"))]
 use nix::libc::{TCGETS2, termios2};
 
 use nix::sys::termios::{
@@ -624,11 +625,14 @@ fn print_terminal_size(
     term_size: Option<&TermSize>,
 ) -> nix::Result<()> {
     // GNU linked against glibc 2.42 provides us baudrate 51 which panics cfgetospeed
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(any(not(target_os = "linux"), target_arch = "powerpc64"))]
+    //#[cfg(not(target_os = "linux"))]
     let speed = nix::sys::termios::cfgetospeed(termios);
-    #[cfg(target_os = "linux")]
+    //#[cfg(target_os = "linux")]
+    #[cfg(any(not(target_os = "linux"), target_arch = "powerpc64"))]
     ioctl_read_bad!(tcgets2, TCGETS2, termios2);
-    #[cfg(target_os = "linux")]
+    //#[cfg(target_os = "linux")]
+    #[cfg(any(not(target_os = "linux"), target_arch = "powerpc64"))]
     let speed = {
         let mut t2 = unsafe { std::mem::zeroed::<termios2>() };
         unsafe { tcgets2(opts.file.as_raw_fd(), &raw mut t2)? };
