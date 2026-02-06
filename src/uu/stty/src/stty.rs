@@ -22,7 +22,11 @@ use clap::{Arg, ArgAction, ArgMatches, Command};
 use nix::libc::{O_NONBLOCK, TIOCGWINSZ, TIOCSWINSZ, c_ushort};
 
 //#[cfg(target_os = "linux")]
-#[cfg(any(not(target_os = "linux"), target_arch = "powerpc64"))]
+//#[cfg(any(not(target_os = "linux"), target_arch = "powerpc64"))]
+#[cfg(all(
+    target_os = "linux",
+    not(all(target_arch = "powerpc64", target_endian = "little"))
+))]
 use nix::libc::{TCGETS2, termios2};
 
 use nix::sys::termios::{
