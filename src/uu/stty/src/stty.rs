@@ -625,14 +625,15 @@ fn print_terminal_size(
     term_size: Option<&TermSize>,
 ) -> nix::Result<()> {
     // GNU linked against glibc 2.42 provides us baudrate 51 which panics cfgetospeed
-    #[cfg(any(not(target_os = "linux"), target_arch = "powerpc64"))]
     //#[cfg(not(target_os = "linux"))]
+    #[cfg(any(not(target_os = "linux"), target_arch = "powerpc64"))]
     let speed = nix::sys::termios::cfgetospeed(termios);
     //#[cfg(target_os = "linux")]
-    #[cfg(any(not(target_os = "linux"), target_arch = "powerpc64"))]
+    #[cfg(all(target_os = "linux", not(target_arch = "powerpc64")))]
     ioctl_read_bad!(tcgets2, TCGETS2, termios2);
     //#[cfg(target_os = "linux")]
-    #[cfg(any(not(target_os = "linux"), target_arch = "powerpc64"))]
+    //#[cfg(any(not(target_os = "linux"), target_arch = "powerpc64"))]
+    #[cfg(all(target_os = "linux", not(target_arch = "powerpc64")))]
     let speed = {
         let mut t2 = unsafe { std::mem::zeroed::<termios2>() };
         unsafe { tcgets2(opts.file.as_raw_fd(), &raw mut t2)? };
