@@ -600,7 +600,7 @@ impl WrappedPrinter {
             self.first_in_line = true;
         }
 
-        print!("{}{}", self.prefix(), token);
+        print!("{}{token}", self.prefix());
         self.current += token_len;
         self.first_in_line = false;
     }
