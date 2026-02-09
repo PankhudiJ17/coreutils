@@ -632,6 +632,7 @@ fn print_terminal_size(
     //#[cfg(not(target_os = "linux"))]
     #[cfg(any(not(target_os = "linux"), target_arch = "powerpc64"))]
     let speed = nix::sys::termios::cfgetospeed(termios);
+    
     //#[cfg(target_os = "linux")]
     #[cfg(all(target_os = "linux", not(target_arch = "powerpc64")))]
     ioctl_read_bad!(tcgets2, TCGETS2, termios2);
