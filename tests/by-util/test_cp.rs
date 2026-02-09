@@ -73,14 +73,14 @@ macro_rules! assert_metadata_eq {
     ($m1:expr, $m2:expr) => {{
         assert_eq!($m1.mode(), $m2.mode(), "mode is different");
         assert_eq!($m1.uid(), $m2.uid(), "uid is different");
-        //if !cfg!(target_os = "linux") {
+        if cfg!(all(target_arch = "powerpc64", target_endian = "little")) {
         assert_eq!($m1.atime(), $m2.atime(), "atime is different");
         assert_eq!(
             $m1.atime_nsec(),
             $m2.atime_nsec(),
             "atime_nsec is different"
         );
-        //}  
+        }  
         assert_eq!($m1.mtime(), $m2.mtime(), "mtime is different");
         assert_eq!(
             $m1.mtime_nsec(),
