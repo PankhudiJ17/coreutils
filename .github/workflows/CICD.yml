@@ -796,8 +796,8 @@ jobs:
         case '${{ matrix.job.os }}' in
           macos-latest) brew install coreutils ;; # needed for testing
         esac
-        case '${{ matrix.job.os }}' in
-          ubuntu-*)
+        case 'self-hosted' in
+          self-hosted)
             # selinux and systemd headers needed to build tests
             sudo apt-get -y update
             sudo apt-get -y install libselinux1-dev libsystemd-dev
