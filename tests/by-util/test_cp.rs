@@ -76,13 +76,14 @@ macro_rules! assert_metadata_eq {
       //  if cfg!(all(target_arch = "powerpc64", target_endian = "little")) {
       //  if cfg!(all(target_os = "linux", not(target_arch = "powerpc64"))) {    
        // if !cfg!(all(target_os = "linux", target_arch = "powerpc64")) {
+        if cfg(all(target_os = "linux", not(target_arch = "powerpc64"))) {    
         assert_eq!($m1.atime(), $m2.atime(), "atime is different");
         assert_eq!(
             $m1.atime_nsec(),
             $m2.atime_nsec(),
             "atime_nsec is different"
         );
-       // }  
+        }  
         assert_eq!($m1.mtime(), $m2.mtime(), "mtime is different");
         assert_eq!(
             $m1.mtime_nsec(),
