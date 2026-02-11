@@ -652,9 +652,9 @@ jobs:
       with:
         toolchain: ${{ env.RUST_MIN_SRV }}
         targets: ${{ matrix.job.target }}
-    - uses: Swatinem/rust-cache@v2
-      with:
-        key: "${{ matrix.job.os }}_${{ matrix.job.target }}"
+    # - uses: Swatinem/rust-cache@v2
+    #   with:
+    #     key: "${{ matrix.job.os }}_${{ matrix.job.target }}"
     - if: ${{ !startsWith(matrix.job.target, 'powerpc64le-') }}    
       name: Run sccache-cache
       uses: mozilla-actions/sccache-action@v0.0.9
@@ -790,7 +790,7 @@ jobs:
           ;;
           powerpc64le-unknown-linux-*)
             sudo apt-get -y update 
-            sudo apt-get -y install gcc-powerpc64le-linux-gnu cargo
+            sudo apt-get -y install gcc cargo
           ;;
         esac
         case '${{ matrix.job.os }}' in
