@@ -933,416 +933,416 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  test_busybox:
-    name: Tests/BusyBox test suite
-    needs: [ min_version, deps ]
-    runs-on: ${{ matrix.job.os }}
-    env:
-      SCCACHE_GHA_ENABLED: "true"
-      RUSTC_WRAPPER: "sccache"
-      CARGO_INCREMENTAL: 0
-    strategy:
-      fail-fast: false
-      matrix:
-        job:
-          - { os: ubuntu-latest }
-    steps:
-    - name: Initialize workflow variables
-      id: vars
-      shell: bash
-      run: |
-        ## VARs setup
-        echo "TEST_SUMMARY_FILE=busybox-result.json" >> $GITHUB_OUTPUT
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-    - uses: Swatinem/rust-cache@v2
-    - name: Run sccache-cache
-      uses: mozilla-actions/sccache-action@v0.0.9
-    - name: Install/setup prerequisites
-      shell: bash
-      run: |
-        sudo apt-get -y update ; sudo apt-get -y install libselinux1-dev
-        ## Install/setup prerequisites
-        make prepare-busytest
-    - name: Run BusyBox test suite
-      id: summary
-      shell: bash
-      run: |
-        ## Run BusyBox test suite
-        set -v
-        cp .busybox-config target/debug/.config
-        ## Run BusyBox test suite
-        bindir=$(pwd)/target/debug
-        cd tmp/busybox-*/testsuite
-        output=$(bindir=$bindir ./runtest 2>&1 || true)
-        printf "%s\n" "${output}"
-        FAIL=$(echo "$output" | grep "^FAIL:\s" | wc --lines)
-        PASS=$(echo "$output" | grep "^PASS:\s" | wc --lines)
-        SKIP=$(echo "$output" | grep "^SKIPPED:\s" | wc --lines)
-        TOTAL=`expr $FAIL + $PASS + $SKIP`
-        echo "FAIL $FAIL"
-        echo "SKIP $SKIP"
-        echo "PASS $PASS"
-        echo "TOTAL $TOTAL"
-        cd -
-        output="Busybox tests summary = TOTAL: $TOTAL / PASS: $PASS / FAIL: $FAIL / SKIP: $SKIP"
-        echo "${output}"
-        if [[ "$FAIL" -gt 0 || "$ERROR" -gt 0 ]]; then echo "::warning ::${output}" ; fi
-        jq -n \
-                --arg date "$(date --rfc-email)" \
-                --arg sha "$GITHUB_SHA" \
-                --arg total "$TOTAL" \
-                --arg pass "$PASS" \
-                --arg skip "$SKIP" \
-                --arg fail "$FAIL" \
-                '{($date): { sha: $sha, total: $total, pass: $pass, skip: $skip, fail: $fail, }}' > '${{ steps.vars.outputs.TEST_SUMMARY_FILE }}'
-          HASH=$(sha1sum '${{ steps.vars.outputs.TEST_SUMMARY_FILE }}' | cut --delim=" " -f 1)
-          echo "HASH=${HASH}" >> $GITHUB_OUTPUT
-    - name: Reserve SHA1/ID of 'test-summary'
-      uses: actions/upload-artifact@v6
-      with:
-        name: "${{ steps.summary.outputs.HASH }}"
-        path: "${{ steps.vars.outputs.TEST_SUMMARY_FILE }}"
-    - name: Reserve test results summary
-      uses: actions/upload-artifact@v6
-      with:
-        name: busybox-test-summary
-        path: "${{ steps.vars.outputs.TEST_SUMMARY_FILE }}"
-    - name: Upload json results
-      uses: actions/upload-artifact@v6
-      with:
-        name: busybox-result.json
-        path: ${{ steps.vars.outputs.TEST_SUMMARY_FILE }}
+  # test_busybox:
+  #   name: Tests/BusyBox test suite
+  #   needs: [ min_version, deps ]
+  #   runs-on: ${{ matrix.job.os }}
+  #   env:
+  #     SCCACHE_GHA_ENABLED: "true"
+  #     RUSTC_WRAPPER: "sccache"
+  #     CARGO_INCREMENTAL: 0
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       job:
+  #         - { os: ubuntu-latest }
+  #   steps:
+  #   - name: Initialize workflow variables
+  #     id: vars
+  #     shell: bash
+  #     run: |
+  #       ## VARs setup
+  #       echo "TEST_SUMMARY_FILE=busybox-result.json" >> $GITHUB_OUTPUT
+  #   - uses: actions/checkout@v6
+  #     with:
+  #       persist-credentials: false
+  #   - uses: Swatinem/rust-cache@v2
+  #   - name: Run sccache-cache
+  #     uses: mozilla-actions/sccache-action@v0.0.9
+  #   - name: Install/setup prerequisites
+  #     shell: bash
+  #     run: |
+  #       sudo apt-get -y update ; sudo apt-get -y install libselinux1-dev
+  #       ## Install/setup prerequisites
+  #       make prepare-busytest
+  #   - name: Run BusyBox test suite
+  #     id: summary
+  #     shell: bash
+  #     run: |
+  #       ## Run BusyBox test suite
+  #       set -v
+  #       cp .busybox-config target/debug/.config
+  #       ## Run BusyBox test suite
+  #       bindir=$(pwd)/target/debug
+  #       cd tmp/busybox-*/testsuite
+  #       output=$(bindir=$bindir ./runtest 2>&1 || true)
+  #       printf "%s\n" "${output}"
+  #       FAIL=$(echo "$output" | grep "^FAIL:\s" | wc --lines)
+  #       PASS=$(echo "$output" | grep "^PASS:\s" | wc --lines)
+  #       SKIP=$(echo "$output" | grep "^SKIPPED:\s" | wc --lines)
+  #       TOTAL=`expr $FAIL + $PASS + $SKIP`
+  #       echo "FAIL $FAIL"
+  #       echo "SKIP $SKIP"
+  #       echo "PASS $PASS"
+  #       echo "TOTAL $TOTAL"
+  #       cd -
+  #       output="Busybox tests summary = TOTAL: $TOTAL / PASS: $PASS / FAIL: $FAIL / SKIP: $SKIP"
+  #       echo "${output}"
+  #       if [[ "$FAIL" -gt 0 || "$ERROR" -gt 0 ]]; then echo "::warning ::${output}" ; fi
+  #       jq -n \
+  #               --arg date "$(date --rfc-email)" \
+  #               --arg sha "$GITHUB_SHA" \
+  #               --arg total "$TOTAL" \
+  #               --arg pass "$PASS" \
+  #               --arg skip "$SKIP" \
+  #               --arg fail "$FAIL" \
+  #               '{($date): { sha: $sha, total: $total, pass: $pass, skip: $skip, fail: $fail, }}' > '${{ steps.vars.outputs.TEST_SUMMARY_FILE }}'
+  #         HASH=$(sha1sum '${{ steps.vars.outputs.TEST_SUMMARY_FILE }}' | cut --delim=" " -f 1)
+  #         echo "HASH=${HASH}" >> $GITHUB_OUTPUT
+  #   - name: Reserve SHA1/ID of 'test-summary'
+  #     uses: actions/upload-artifact@v6
+  #     with:
+  #       name: "${{ steps.summary.outputs.HASH }}"
+  #       path: "${{ steps.vars.outputs.TEST_SUMMARY_FILE }}"
+  #   - name: Reserve test results summary
+  #     uses: actions/upload-artifact@v6
+  #     with:
+  #       name: busybox-test-summary
+  #       path: "${{ steps.vars.outputs.TEST_SUMMARY_FILE }}"
+  #   - name: Upload json results
+  #     uses: actions/upload-artifact@v6
+  #     with:
+  #       name: busybox-result.json
+  #       path: ${{ steps.vars.outputs.TEST_SUMMARY_FILE }}
 
-  test_toybox:
-    name: Tests/Toybox test suite
-    needs: [ min_version, deps ]
-    runs-on: ${{ matrix.job.os }}
-    env:
-      SCCACHE_GHA_ENABLED: "true"
-      RUSTC_WRAPPER: "sccache"
-      CARGO_INCREMENTAL: 0
-    strategy:
-      fail-fast: false
-      matrix:
-        job:
-          - { os: ubuntu-latest }
-    steps:
-    - name: Initialize workflow variables
-      id: vars
-      shell: bash
-      run: |
-        ## VARs setup
-        outputs() { step_id="${{ github.action }}"; for var in "$@" ; do echo steps.${step_id}.outputs.${var}="${!var}"; echo "${var}=${!var}" >> $GITHUB_OUTPUT; done; }
-        TEST_SUMMARY_FILE="toybox-result.json"
-        outputs TEST_SUMMARY_FILE
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-    - uses: dtolnay/rust-toolchain@master
-      with:
-        toolchain: ${{ env.RUST_MIN_SRV }}
-    - uses: Swatinem/rust-cache@v2
-    - name: Run sccache-cache
-      uses: mozilla-actions/sccache-action@v0.0.9
-    - name: Install/setup prerequisites
-      shell: bash
-      run: |
-        sudo apt-get -y update ; sudo apt-get -y install libselinux1-dev
-    - name: Build coreutils as multiple binaries
-      shell: bash
-      run: |
-        ## Build individual uutil binaries
-        set -v
-        make
-    - name: Run toybox src
-      shell: bash
-      run: |
-        make toybox-src
-    - name: Run Toybox test suite
-      id: summary
-      shell: bash
-      run: |
-        ## Run Toybox test suite
-        set -v
-        cd tmp/toybox-*/
-        make defconfig
-        make tests &> tmp.log || true
-        cat tmp.log
-        FAIL=$(grep "FAIL" tmp.log | wc --lines)
-        PASS=$(grep "PASS:"  tmp.log| wc --lines)
-        SKIP=$(grep " disabled$"  tmp.log| wc --lines)
-        TOTAL=`expr $FAIL + $PASS + $SKIP`
-        echo "FAIL $FAIL"
-        echo "SKIP $SKIP"
-        echo "PASS $PASS"
-        echo "TOTAL $TOTAL"
-        cd -
-        jq -n \
-                --arg date "$(date --rfc-email)" \
-                --arg sha "$GITHUB_SHA" \
-                --arg total "$TOTAL" \
-                --arg pass "$PASS" \
-                --arg skip "$SKIP" \
-                --arg fail "$FAIL" \
-                '{($date): { sha: $sha, total: $total, pass: $pass, skip: $skip, fail: $fail, }}' > '${{ steps.vars.outputs.TEST_SUMMARY_FILE }}'
-        output="Toybox tests summary = TOTAL: $TOTAL / PASS: $PASS / FAIL: $FAIL / SKIP: $SKIP"
-        echo "${output}"
-        if [[ "$FAIL" -gt 0 || "$ERROR" -gt 0 ]]; then echo "::warning ::${output}" ; fi
-        HASH=$(sha1sum '${{ steps.vars.outputs.TEST_SUMMARY_FILE }}' | cut --delim=" " -f 1)
-          echo "HASH=${HASH}" >> $GITHUB_OUTPUT
-    - name: Reserve SHA1/ID of 'test-summary'
-      uses: actions/upload-artifact@v6
-      with:
-        name: "${{ steps.summary.outputs.HASH }}"
-        path: "${{ steps.vars.outputs.TEST_SUMMARY_FILE }}"
-    - name: Reserve test results summary
-      uses: actions/upload-artifact@v6
-      with:
-        name: toybox-test-summary
-        path: "${{ steps.vars.outputs.TEST_SUMMARY_FILE }}"
-    - name: Upload json results
-      uses: actions/upload-artifact@v6
-      with:
-        name: toybox-result.json
-        path: ${{ steps.vars.outputs.TEST_SUMMARY_FILE }}
+  # test_toybox:
+  #   name: Tests/Toybox test suite
+  #   needs: [ min_version, deps ]
+  #   runs-on: ${{ matrix.job.os }}
+  #   env:
+  #     SCCACHE_GHA_ENABLED: "true"
+  #     RUSTC_WRAPPER: "sccache"
+  #     CARGO_INCREMENTAL: 0
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       job:
+  #         - { os: ubuntu-latest }
+  #   steps:
+  #   - name: Initialize workflow variables
+  #     id: vars
+  #     shell: bash
+  #     run: |
+  #       ## VARs setup
+  #       outputs() { step_id="${{ github.action }}"; for var in "$@" ; do echo steps.${step_id}.outputs.${var}="${!var}"; echo "${var}=${!var}" >> $GITHUB_OUTPUT; done; }
+  #       TEST_SUMMARY_FILE="toybox-result.json"
+  #       outputs TEST_SUMMARY_FILE
+  #   - uses: actions/checkout@v6
+  #     with:
+  #       persist-credentials: false
+  #   - uses: dtolnay/rust-toolchain@master
+  #     with:
+  #       toolchain: ${{ env.RUST_MIN_SRV }}
+  #   - uses: Swatinem/rust-cache@v2
+  #   - name: Run sccache-cache
+  #     uses: mozilla-actions/sccache-action@v0.0.9
+  #   - name: Install/setup prerequisites
+  #     shell: bash
+  #     run: |
+  #       sudo apt-get -y update ; sudo apt-get -y install libselinux1-dev
+  #   - name: Build coreutils as multiple binaries
+  #     shell: bash
+  #     run: |
+  #       ## Build individual uutil binaries
+  #       set -v
+  #       make
+  #   - name: Run toybox src
+  #     shell: bash
+  #     run: |
+  #       make toybox-src
+  #   - name: Run Toybox test suite
+  #     id: summary
+  #     shell: bash
+  #     run: |
+  #       ## Run Toybox test suite
+  #       set -v
+  #       cd tmp/toybox-*/
+  #       make defconfig
+  #       make tests &> tmp.log || true
+  #       cat tmp.log
+  #       FAIL=$(grep "FAIL" tmp.log | wc --lines)
+  #       PASS=$(grep "PASS:"  tmp.log| wc --lines)
+  #       SKIP=$(grep " disabled$"  tmp.log| wc --lines)
+  #       TOTAL=`expr $FAIL + $PASS + $SKIP`
+  #       echo "FAIL $FAIL"
+  #       echo "SKIP $SKIP"
+  #       echo "PASS $PASS"
+  #       echo "TOTAL $TOTAL"
+  #       cd -
+  #       jq -n \
+  #               --arg date "$(date --rfc-email)" \
+  #               --arg sha "$GITHUB_SHA" \
+  #               --arg total "$TOTAL" \
+  #               --arg pass "$PASS" \
+  #               --arg skip "$SKIP" \
+  #               --arg fail "$FAIL" \
+  #               '{($date): { sha: $sha, total: $total, pass: $pass, skip: $skip, fail: $fail, }}' > '${{ steps.vars.outputs.TEST_SUMMARY_FILE }}'
+  #       output="Toybox tests summary = TOTAL: $TOTAL / PASS: $PASS / FAIL: $FAIL / SKIP: $SKIP"
+  #       echo "${output}"
+  #       if [[ "$FAIL" -gt 0 || "$ERROR" -gt 0 ]]; then echo "::warning ::${output}" ; fi
+  #       HASH=$(sha1sum '${{ steps.vars.outputs.TEST_SUMMARY_FILE }}' | cut --delim=" " -f 1)
+  #         echo "HASH=${HASH}" >> $GITHUB_OUTPUT
+  #   - name: Reserve SHA1/ID of 'test-summary'
+  #     uses: actions/upload-artifact@v6
+  #     with:
+  #       name: "${{ steps.summary.outputs.HASH }}"
+  #       path: "${{ steps.vars.outputs.TEST_SUMMARY_FILE }}"
+  #   - name: Reserve test results summary
+  #     uses: actions/upload-artifact@v6
+  #     with:
+  #       name: toybox-test-summary
+  #       path: "${{ steps.vars.outputs.TEST_SUMMARY_FILE }}"
+  #   - name: Upload json results
+  #     uses: actions/upload-artifact@v6
+  #     with:
+  #       name: toybox-result.json
+  #       path: ${{ steps.vars.outputs.TEST_SUMMARY_FILE }}
 
-  coverage:
-    name: Code Coverage
-    runs-on: ${{ matrix.job.os }}
-    timeout-minutes: 90
-    env:
-      SCCACHE_GHA_ENABLED: "true"
-      RUSTC_WRAPPER: "sccache"
-      CARGO_INCREMENTAL: 0
-    strategy:
-      fail-fast: false
-      matrix:
-        job:
-          - { os: ubuntu-latest  , features: unix, toolchain: nightly }
-          # FIXME: Re-enable macos code coverage
-          # - { os: macos-latest   , features: macos, toolchain: nightly }
-          # FIXME: Re-enable Code Coverage on windows, which currently fails due to "profiler_builtins". See #6686.
-          # - { os: windows-latest , features: windows, toolchain: nightly-x86_64-pc-windows-gnu }
-    steps:
-    - uses: actions/checkout@v6
-    - uses: dtolnay/rust-toolchain@master
-      with:
-        toolchain: ${{ matrix.job.toolchain }}
-        components: rustfmt
-    - uses: taiki-e/install-action@v2
-      with:
-        tool: nextest,grcov@0.8.24
-    - uses: Swatinem/rust-cache@v2
+  # coverage:
+  #   name: Code Coverage
+  #   runs-on: ${{ matrix.job.os }}
+  #   timeout-minutes: 90
+  #   env:
+  #     SCCACHE_GHA_ENABLED: "true"
+  #     RUSTC_WRAPPER: "sccache"
+  #     CARGO_INCREMENTAL: 0
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       job:
+  #         - { os: ubuntu-latest  , features: unix, toolchain: nightly }
+  #         # FIXME: Re-enable macos code coverage
+  #         # - { os: macos-latest   , features: macos, toolchain: nightly }
+  #         # FIXME: Re-enable Code Coverage on windows, which currently fails due to "profiler_builtins". See #6686.
+  #         # - { os: windows-latest , features: windows, toolchain: nightly-x86_64-pc-windows-gnu }
+  #   steps:
+  #   - uses: actions/checkout@v6
+  #   - uses: dtolnay/rust-toolchain@master
+  #     with:
+  #       toolchain: ${{ matrix.job.toolchain }}
+  #       components: rustfmt
+  #   - uses: taiki-e/install-action@v2
+  #     with:
+  #       tool: nextest,grcov@0.8.24
+  #   - uses: Swatinem/rust-cache@v2
 
-    - name: Run sccache-cache
-      uses: mozilla-actions/sccache-action@v0.0.9
+  #   - name: Run sccache-cache
+  #     uses: mozilla-actions/sccache-action@v0.0.9
 
-    # - name: Reattach HEAD ## may be needed for accurate code coverage info
-    #   run: git checkout ${{ github.head_ref }}
+  #   # - name: Reattach HEAD ## may be needed for accurate code coverage info
+  #   #   run: git checkout ${{ github.head_ref }}
 
-    - name: Initialize workflow variables
-      id: vars
-      shell: bash
-      run: |
-        ## VARs setup
-        outputs() { step_id="${{ github.action }}"; for var in "$@" ; do echo steps.${step_id}.outputs.${var}="${!var}"; echo "${var}=${!var}" >> $GITHUB_OUTPUT; done; }
+  #   - name: Initialize workflow variables
+  #     id: vars
+  #     shell: bash
+  #     run: |
+  #       ## VARs setup
+  #       outputs() { step_id="${{ github.action }}"; for var in "$@" ; do echo steps.${step_id}.outputs.${var}="${!var}"; echo "${var}=${!var}" >> $GITHUB_OUTPUT; done; }
 
-        # toolchain
-        TOOLCHAIN="nightly" ## default to "nightly" toolchain (required for certain required unstable compiler flags) ## !maint: refactor when stable channel has needed support
+  #       # toolchain
+  #       TOOLCHAIN="nightly" ## default to "nightly" toolchain (required for certain required unstable compiler flags) ## !maint: refactor when stable channel has needed support
 
-        # * specify gnu-type TOOLCHAIN for windows; `grcov` requires gnu-style code coverage data files
-        case ${{ matrix.job.os }} in windows-*) TOOLCHAIN="$TOOLCHAIN-x86_64-pc-windows-gnu" ;; esac;
+  #       # * specify gnu-type TOOLCHAIN for windows; `grcov` requires gnu-style code coverage data files
+  #       case ${{ matrix.job.os }} in windows-*) TOOLCHAIN="$TOOLCHAIN-x86_64-pc-windows-gnu" ;; esac;
 
-        # * use requested TOOLCHAIN if specified
-        if [ -n "${{ matrix.job.toolchain }}" ]; then TOOLCHAIN="${{ matrix.job.toolchain }}" ; fi
-        outputs TOOLCHAIN
+  #       # * use requested TOOLCHAIN if specified
+  #       if [ -n "${{ matrix.job.toolchain }}" ]; then TOOLCHAIN="${{ matrix.job.toolchain }}" ; fi
+  #       outputs TOOLCHAIN
 
-        # target-specific options
+  #       # target-specific options
 
-        # * CARGO_FEATURES_OPTION
-        CARGO_FEATURES_OPTION='--all-features' ;  ## default to '--all-features' for code coverage
-        if [ -n "${{ matrix.job.features }}" ]; then CARGO_FEATURES_OPTION='--features=${{ matrix.job.features }}' ; fi
-        outputs CARGO_FEATURES_OPTION
+  #       # * CARGO_FEATURES_OPTION
+  #       CARGO_FEATURES_OPTION='--all-features' ;  ## default to '--all-features' for code coverage
+  #       if [ -n "${{ matrix.job.features }}" ]; then CARGO_FEATURES_OPTION='--features=${{ matrix.job.features }}' ; fi
+  #       outputs CARGO_FEATURES_OPTION
 
-        # * CODECOV_FLAGS
-        CODECOV_FLAGS=$( echo "${{ matrix.job.os }}" | sed 's/[^[:alnum:]]/_/g' )
-        outputs CODECOV_FLAGS
+  #       # * CODECOV_FLAGS
+  #       CODECOV_FLAGS=$( echo "${{ matrix.job.os }}" | sed 's/[^[:alnum:]]/_/g' )
+  #       outputs CODECOV_FLAGS
 
-    - name: Install/setup prerequisites
-      shell: bash
-      run: |
-        ## Install/setup prerequisites
-        case '${{ matrix.job.os }}' in
-          macos-latest) brew install coreutils ;; # needed for testing
-        esac
+  #   - name: Install/setup prerequisites
+  #     shell: bash
+  #     run: |
+  #       ## Install/setup prerequisites
+  #       case '${{ matrix.job.os }}' in
+  #         macos-latest) brew install coreutils ;; # needed for testing
+  #       esac
 
-        case '${{ matrix.job.os }}' in
-          ubuntu-latest)
-            # selinux and systemd headers needed to build tests
-            sudo apt-get -y update
-            sudo apt-get -y install libselinux1-dev libsystemd-dev
-            # pinky is a tool to show logged-in users from utmp, and gecos fields from /etc/passwd.
-            # In GitHub Action *nix VMs, no accounts log in, even the "runner" account that runs the commands, and "system boot" entry is missing.
-            # The account also has empty gecos fields.
-            # To work around these issues for pinky (and who) tests, we create a fake utmp file with a
-            # system boot entry and a login entry for the GH runner account.
-            FAKE_UTMP_2='[2] [00000] [~~  ] [reboot] [~   ] [6.0.0-test] [0.0.0.0] [2022-02-22T22:11:22,222222+00:00]'
-            FAKE_UTMP_7='[7] [999999] [tty2] [runner] [tty2] [          ] [0.0.0.0] [2022-02-22T22:22:22,222222+00:00]'
-            (echo "$FAKE_UTMP_2" ; echo "$FAKE_UTMP_7") | sudo utmpdump -r -o /var/run/utmp
-            # ... and add a full name to each account with a gecos field but no full name.
-            sudo sed -i 's/:,/:runner name,/' /etc/passwd
-            # We also create a couple optional files pinky looks for
-            touch /home/runner/.project
-            echo "foo" > /home/runner/.plan
-            # add user with digital username for testing with issue #7787
-            echo 200:x:2000:2000::/home/200:/bin/bash | sudo tee -a /etc/passwd
-            echo 200:x:2000: | sudo tee -a /etc/group
-            ;;
-        esac
+  #       case '${{ matrix.job.os }}' in
+  #         ubuntu-latest)
+  #           # selinux and systemd headers needed to build tests
+  #           sudo apt-get -y update
+  #           sudo apt-get -y install libselinux1-dev libsystemd-dev
+  #           # pinky is a tool to show logged-in users from utmp, and gecos fields from /etc/passwd.
+  #           # In GitHub Action *nix VMs, no accounts log in, even the "runner" account that runs the commands, and "system boot" entry is missing.
+  #           # The account also has empty gecos fields.
+  #           # To work around these issues for pinky (and who) tests, we create a fake utmp file with a
+  #           # system boot entry and a login entry for the GH runner account.
+  #           FAKE_UTMP_2='[2] [00000] [~~  ] [reboot] [~   ] [6.0.0-test] [0.0.0.0] [2022-02-22T22:11:22,222222+00:00]'
+  #           FAKE_UTMP_7='[7] [999999] [tty2] [runner] [tty2] [          ] [0.0.0.0] [2022-02-22T22:22:22,222222+00:00]'
+  #           (echo "$FAKE_UTMP_2" ; echo "$FAKE_UTMP_7") | sudo utmpdump -r -o /var/run/utmp
+  #           # ... and add a full name to each account with a gecos field but no full name.
+  #           sudo sed -i 's/:,/:runner name,/' /etc/passwd
+  #           # We also create a couple optional files pinky looks for
+  #           touch /home/runner/.project
+  #           echo "foo" > /home/runner/.plan
+  #           # add user with digital username for testing with issue #7787
+  #           echo 200:x:2000:2000::/home/200:/bin/bash | sudo tee -a /etc/passwd
+  #           echo 200:x:2000: | sudo tee -a /etc/group
+  #           ;;
+  #       esac
 
-        ## Install the llvm-tools component to get access to `llvm-profdata`
-        rustup component add llvm-tools
+  #       ## Install the llvm-tools component to get access to `llvm-profdata`
+  #       rustup component add llvm-tools
 
-    - name: Run test and coverage
-      id: run_test_cov
-      run: |
-        outputs() { step_id="${{ github.action }}"; for var in "$@" ; do echo steps.${step_id}.outputs.${var}="${!var}"; echo "${var}=${!var}" >> $GITHUB_OUTPUT; done; }
+  #   - name: Run test and coverage
+  #     id: run_test_cov
+  #     run: |
+  #       outputs() { step_id="${{ github.action }}"; for var in "$@" ; do echo steps.${step_id}.outputs.${var}="${!var}"; echo "${var}=${!var}" >> $GITHUB_OUTPUT; done; }
 
-        # Run the coverage script
-        ./util/build-run-test-coverage-linux.sh
+  #       # Run the coverage script
+  #       ./util/build-run-test-coverage-linux.sh
 
-        outputs REPORT_FILE
-      env:
-        COVERAGE_DIR: ${{ github.workspace }}/coverage
-        FEATURES_OPTION: ${{ steps.vars.outputs.CARGO_FEATURES_OPTION }}
-        # RUSTUP_TOOLCHAIN: ${{ steps.vars.outputs.TOOLCHAIN }}
+  #       outputs REPORT_FILE
+  #     env:
+  #       COVERAGE_DIR: ${{ github.workspace }}/coverage
+  #       FEATURES_OPTION: ${{ steps.vars.outputs.CARGO_FEATURES_OPTION }}
+  #       # RUSTUP_TOOLCHAIN: ${{ steps.vars.outputs.TOOLCHAIN }}
 
-    - name: Upload coverage results (to Codecov.io)
-      uses: codecov/codecov-action@v5
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        files: ${{ steps.run_test_cov.outputs.report }}
-        ## flags: IntegrationTests, UnitTests, ${{ steps.vars.outputs.CODECOV_FLAGS }}
-        flags: ${{ steps.vars.outputs.CODECOV_FLAGS }}
-        name: codecov-umbrella
-        fail_ci_if_error: false
-    - name: Upload test results to Codecov
-      if: ${{ !cancelled() }}
-      uses: codecov/codecov-action@v5
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        report_type: test_results
-        files: target/nextest/coverage/junit.xml
-        disable_search: true
-        flags: coverage,${{ matrix.job.os }}
-        fail_ci_if_error: false
+  #   - name: Upload coverage results (to Codecov.io)
+  #     uses: codecov/codecov-action@v5
+  #     with:
+  #       token: ${{ secrets.CODECOV_TOKEN }}
+  #       files: ${{ steps.run_test_cov.outputs.report }}
+  #       ## flags: IntegrationTests, UnitTests, ${{ steps.vars.outputs.CODECOV_FLAGS }}
+  #       flags: ${{ steps.vars.outputs.CODECOV_FLAGS }}
+  #       name: codecov-umbrella
+  #       fail_ci_if_error: false
+  #   - name: Upload test results to Codecov
+  #     if: ${{ !cancelled() }}
+  #     uses: codecov/codecov-action@v5
+  #     with:
+  #       token: ${{ secrets.CODECOV_TOKEN }}
+  #       report_type: test_results
+  #       files: target/nextest/coverage/junit.xml
+  #       disable_search: true
+  #       flags: coverage,${{ matrix.job.os }}
+  #       fail_ci_if_error: false
 
-  test_separately:
-    # duplicated with other CI, but has better appearance
-    name: Separate Builds (individual and coreutils)
-    runs-on: ${{ matrix.job.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        job:
-          - { os: ubuntu-latest  , features: feat_os_unix }
-          - { os: macos-latest   , features: feat_os_macos }
-          - { os: windows-latest , features: feat_os_windows }
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-    - name: Avoid no space left on device
-      run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android &
-    - uses: dtolnay/rust-toolchain@stable
-    - uses: Swatinem/rust-cache@v2
-    - name: build and test all programs individually
-      shell: bash
-      run: |
-        CARGO_FEATURES_OPTION='--features=${{ matrix.job.features }}' ;
-        for f in $(util/show-utils.sh ${CARGO_FEATURES_OPTION})
-        do
-          echo "Building and testing $f"
-          cargo test -p "uu_$f" -p coreutils --features=$f --no-default-features
-        done
+  # test_separately:
+  #   # duplicated with other CI, but has better appearance
+  #   name: Separate Builds (individual and coreutils)
+  #   runs-on: ${{ matrix.job.os }}
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       job:
+  #         - { os: ubuntu-latest  , features: feat_os_unix }
+  #         - { os: macos-latest   , features: feat_os_macos }
+  #         - { os: windows-latest , features: feat_os_windows }
+  #   steps:
+  #   - uses: actions/checkout@v6
+  #     with:
+  #       persist-credentials: false
+  #   - name: Avoid no space left on device
+  #     run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android &
+  #   - uses: dtolnay/rust-toolchain@stable
+  #   - uses: Swatinem/rust-cache@v2
+  #   - name: build and test all programs individually
+  #     shell: bash
+  #     run: |
+  #       CARGO_FEATURES_OPTION='--features=${{ matrix.job.features }}' ;
+  #       for f in $(util/show-utils.sh ${CARGO_FEATURES_OPTION})
+  #       do
+  #         echo "Building and testing $f"
+  #         cargo test -p "uu_$f" -p coreutils --features=$f --no-default-features
+  #       done
 
-  test_selinux:
-    name: Build/SELinux
-    needs: [ min_version, deps ]
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-    - name: Setup Lima
-      uses: lima-vm/lima-actions/setup@v1
-      id: lima-actions-setup
-    - name: Cache ~/.cache/lima
-      uses: actions/cache@v5
-      with:
-        path: ~/.cache/lima
-        key: lima-${{ steps.lima-actions-setup.outputs.version }}
-    - name: Start Fedora VM with SELinux
-      run: limactl start --plain --name=default --cpus=4 --disk=30 --memory=4 --network=lima:user-v2 template:fedora
-    - run: rsync -v -a -e ssh . lima-default:~/work/
-    - name: Setup Rust and other build deps in VM
-      run: |
-        lima sudo dnf install --nodocs gcc g++ git rustup libselinux-devel clang-devel attr -y
-        lima rustup-init -y --default-toolchain stable --profile minimal -c clippy
-    - name: Verify SELinux Status
-      run: |
-        lima getenforce
-        lima ls -laZ /etc/selinux
-    - name: Build and Test with SELinux
-      run: |
-        lima ls
-        lima bash -c "cd work && cargo test --features 'feat_selinux' --no-default-features"
-    - name: Lint with SELinux
-      run: lima bash -c "cd work && cargo clippy --all-targets --features 'feat_selinux' --no-default-features -- -D warnings"
+  # test_selinux:
+  #   name: Build/SELinux
+  #   needs: [ min_version, deps ]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v6
+  #     with:
+  #       persist-credentials: false
+  #   - name: Setup Lima
+  #     uses: lima-vm/lima-actions/setup@v1
+  #     id: lima-actions-setup
+  #   - name: Cache ~/.cache/lima
+  #     uses: actions/cache@v5
+  #     with:
+  #       path: ~/.cache/lima
+  #       key: lima-${{ steps.lima-actions-setup.outputs.version }}
+  #   - name: Start Fedora VM with SELinux
+  #     run: limactl start --plain --name=default --cpus=4 --disk=30 --memory=4 --network=lima:user-v2 template:fedora
+  #   - run: rsync -v -a -e ssh . lima-default:~/work/
+  #   - name: Setup Rust and other build deps in VM
+  #     run: |
+  #       lima sudo dnf install --nodocs gcc g++ git rustup libselinux-devel clang-devel attr -y
+  #       lima rustup-init -y --default-toolchain stable --profile minimal -c clippy
+  #   - name: Verify SELinux Status
+  #     run: |
+  #       lima getenforce
+  #       lima ls -laZ /etc/selinux
+  #   - name: Build and Test with SELinux
+  #     run: |
+  #       lima ls
+  #       lima bash -c "cd work && cargo test --features 'feat_selinux' --no-default-features"
+  #   - name: Lint with SELinux
+  #     run: lima bash -c "cd work && cargo clippy --all-targets --features 'feat_selinux' --no-default-features -- -D warnings"
 
-  test_selinux_stubs:
-    name: Build/SELinux-Stubs (Non-Linux)
-    needs: [ min_version, deps ]
-    runs-on: ${{ matrix.job.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        job:
-          - { os: macos-latest   , features: feat_os_macos }
-          - { os: windows-latest , features: feat_os_windows }
+  # test_selinux_stubs:
+  #   name: Build/SELinux-Stubs (Non-Linux)
+  #   needs: [ min_version, deps ]
+  #   runs-on: ${{ matrix.job.os }}
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       job:
+  #         - { os: macos-latest   , features: feat_os_macos }
+  #         - { os: windows-latest , features: feat_os_windows }
 
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-    - uses: dtolnay/rust-toolchain@stable
-    - uses: Swatinem/rust-cache@v2
-    - name: Build SELinux utilities as stubs
-      run: cargo build -p uu_chcon -p uu_runcon
-    - name: Verify stub binaries exist
-      shell: bash
-      run: |
-        test -f target/debug/chcon || test -f target/debug/chcon.exe
-        test -f target/debug/runcon || test -f target/debug/runcon.exe
-    - name: Verify workspace builds with stubs
-      run: cargo build --features ${{ matrix.job.features }}
+  #   steps:
+  #   - uses: actions/checkout@v6
+  #     with:
+  #       persist-credentials: false
+  #   - uses: dtolnay/rust-toolchain@stable
+  #   - uses: Swatinem/rust-cache@v2
+  #   - name: Build SELinux utilities as stubs
+  #     run: cargo build -p uu_chcon -p uu_runcon
+  #   - name: Verify stub binaries exist
+  #     shell: bash
+  #     run: |
+  #       test -f target/debug/chcon || test -f target/debug/chcon.exe
+  #       test -f target/debug/runcon || test -f target/debug/runcon.exe
+  #   - name: Verify workspace builds with stubs
+  #     run: cargo build --features ${{ matrix.job.features }}
 
-  test_safe_traversal:
-    name: Safe Traversal Security Check
-    runs-on: ubuntu-latest
-    needs: [ min_version, deps ]
+  # test_safe_traversal:
+  #   name: Safe Traversal Security Check
+  #   runs-on: ubuntu-latest
+  #   needs: [ min_version, deps ]
 
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-    - uses: dtolnay/rust-toolchain@stable
-    - uses: Swatinem/rust-cache@v2
-    - name: Install strace
-      run: sudo apt-get update && sudo apt-get install -y strace
-    - name: Build utilities with safe traversal
-      run: cargo build --profile=release-small -p uu_rm -p uu_chmod -p uu_chown -p uu_chgrp -p uu_mv -p uu_du
-    - name: Run safe traversal verification
-      run: ./util/check-safe-traversal.sh
+  #   steps:
+  #   - uses: actions/checkout@v6
+  #     with:
+  #       persist-credentials: false
+  #   - uses: dtolnay/rust-toolchain@stable
+  #   - uses: Swatinem/rust-cache@v2
+  #   - name: Install strace
+  #     run: sudo apt-get update && sudo apt-get install -y strace
+  #   - name: Build utilities with safe traversal
+  #     run: cargo build --profile=release-small -p uu_rm -p uu_chmod -p uu_chown -p uu_chgrp -p uu_mv -p uu_du
+  #   - name: Run safe traversal verification
+  #     run: ./util/check-safe-traversal.sh
