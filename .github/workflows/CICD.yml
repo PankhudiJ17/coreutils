@@ -602,9 +602,9 @@ jobs:
   #       name: size-result
   #       path: size-result.json
 
-  # build:
-  #   permissions:
-  #     contents: write # to create GitHub release (softprops/action-gh-release)
+  build:
+    permissions:
+      contents: write # to create GitHub release (softprops/action-gh-release)
 
     name: Build
 #  needs: [ min_version, deps ]
