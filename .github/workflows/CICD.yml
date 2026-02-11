@@ -648,10 +648,10 @@ jobs:
         persist-credentials: false
     - name: Avoid no space left on device
       run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android &
-    - uses: dtolnay/rust-toolchain@master
-      with:
-        toolchain: ${{ env.RUST_MIN_SRV }}
-        targets: ${{ matrix.job.target }}
+    # - uses: dtolnay/rust-toolchain@master
+    #   with:
+    #     toolchain: ${{ env.RUST_MIN_SRV }}
+    #     targets: ${{ matrix.job.target }}
     # - uses: Swatinem/rust-cache@v2
     #   with:
     #     key: "${{ matrix.job.os }}_${{ matrix.job.target }}"
@@ -729,8 +729,8 @@ jobs:
         if [ "${{ matrix.job.default-features }}" == "false" ]; then CARGO_DEFAULT_FEATURES_OPTION='--no-default-features' ; fi
         outputs CARGO_DEFAULT_FEATURES_OPTION
         # * CARGO_CMD
-        CARGO_CMD='cross'
-        CARGO_CMD_OPTIONS='+${{ env.RUST_MIN_SRV }}'
+        #CARGO_CMD='cross'
+        #CARGO_CMD_OPTIONS='+${{ env.RUST_MIN_SRV }}'
         # Added suffix for artifacts, needed when multiple jobs use the same target.
         ARTIFACTS_SUFFIX=''
         case '${{ matrix.job.use-cross }}' in
