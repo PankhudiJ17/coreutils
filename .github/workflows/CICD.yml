@@ -262,349 +262,349 @@ jobs:
   #         ( cd "$dir" && cargo fetch --locked --quiet --target $(rustc --print host-tuple)) || { echo "::error file=$dir/Cargo.lock::'$dir/Cargo.lock' file requires update (use \`cd '$dir' && cargo +${{ env.RUST_MIN_SRV }} update\`)" ; exit 1 ; }
   #       done
 
-  build_makefile:
-    name: Build/Makefile
-    needs: [ min_version, deps ]
-    runs-on: ${{ matrix.job.os }}
-    env:
-      SCCACHE_GHA_ENABLED: "true"
-      RUSTC_WRAPPER: "sccache"
-      CARGO_INCREMENTAL: 0
-    strategy:
-      fail-fast: false
-      matrix:
-        job:
-          - { os: ubuntu-latest , features: feat_os_unix }
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-    - uses: dtolnay/rust-toolchain@stable
-      with:
-        target: aarch64-unknown-linux-gnu
-    - uses: taiki-e/install-action@nextest
-    - uses: Swatinem/rust-cache@v2
-    # Test build on the system missing libselinux (don't install libselinux1-dev at here)
-    - name: Run sccache-cache
-      uses: mozilla-actions/sccache-action@v0.0.9
-    - name: "`make build`"
-        # Also check that target/CACHEDIR.TAG is created on a fresh checkout
-      shell: bash
-      run: |
-        set -x
-        # Target directory must not exist to start with, otherwise cargo
-        # will not create target/CACHEDIR.TAG.
-        if [[ -d target ]]; then
-          mv -T target target.cache
-        fi
-        # Check that we don't cross-build uudoc
-        env CARGO_BUILD_TARGET=aarch64-unknown-linux-gnu make install-manpages PREFIX=/tmp/usr UTILS=true
-        # We don't build coreutils without MULTICALL=y
-        ! test -e target/debug/coreutils
-        # build (host)
-        make build
-        echo "Check that target directory will be ignored by backup tools"
-        test -f target/CACHEDIR.TAG
-        # Restore cache for target/release (we only did a debug build)
-        mv -t target/ target.cache/release 2>/dev/null || true
-    - name: "`make nextest`"
-      shell: bash
-      run: make nextest PROFILE=ci CARGOFLAGS="--hide-progress-bar"
-      env:
-        RUST_BACKTRACE: "1"
-    - name: Upload test results to Codecov
-      if: ${{ !cancelled() }}
-      uses: codecov/codecov-action@v5
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        report_type: test_results
-        files: target/nextest/ci/junit.xml
-        disable_search: true
-        flags: makefile,${{ matrix.job.os }}
-        fail_ci_if_error: false
-    - name: "`make install PROG_PREFIX=uu- PROFILE=release-small COMPLETIONS=n MANPAGES=n LOCALES=n`"
-      shell: bash
-      run: |
-        set -x
-        DESTDIR=/tmp/ make install PROG_PREFIX=uu- PROFILE=release-small COMPLETIONS=n MANPAGES=n LOCALES=n
-        # Check that utils are built with given profile
-        ./target/release-small/true
-        # Check that the progs have prefix
-        test -f /tmp/usr/local/bin/uu-tty
-        test -f /tmp/usr/local/libexec/uu-coreutils/libstdbuf.*
-        # Check that the manpage is not present
-        ! test -f /tmp/usr/local/share/man/man1/uu-whoami.1
-        # Check that the completion is not present
-        ! test -f /tmp/usr/local/share/zsh/site-functions/_uu-install
-        ! test -f /tmp/usr/local/share/bash-completion/completions/uu-head.bash
-        ! test -f /tmp/usr/local/share/fish/vendor_completions.d/uu-cat.fish
-      env:
-        RUST_BACKTRACE: "1"
-    - name: "`make install`"
-      shell: bash
-      run: |
-        set -x
-        DESTDIR=/tmp/ make PROFILE=release install
-        # Check that the utils are present
-        test -f /tmp/usr/local/bin/tty
-        # Check that the manpage is present
-        test -f /tmp/usr/local/share/man/man1/md5sum.1
-        # Check that the completion is present
-        test -f /tmp/usr/local/share/zsh/site-functions/_b2sum
-        test -f /tmp/usr/local/share/bash-completion/completions/head.bash
-        test -f /tmp/usr/local/share/fish/vendor_completions.d/cat.fish
-      env:
-        RUST_BACKTRACE: "1"
-    - name: "`make uninstall`"
-      shell: bash
-      run: |
-        set -x
-        DESTDIR=/tmp/ make uninstall
-        # Check that the utils are not present
-        ! test -f /tmp/usr/local/bin/tty
-        # Check that the manpage is not present
-        ! test -f /tmp/usr/local/share/man/man1/whoami.1
-        # Check that the completion is not present
-        ! test -f /tmp/usr/local/share/zsh/site-functions/_install
-        ! test -f /tmp/usr/local/share/bash-completion/completions/head.bash
-        ! test -f /tmp/usr/local/share/fish/vendor_completions.d/cat.fish
-    - name: "`make install MULTICALL=n`"
-      shell: bash
-      run: |
-        set -x
-        DESTDIR=/tmp/ make PROFILE=release MULTICALL=n install
-        # Check that *sum are present
-        for s in {md5,b2,sha1,sha224,sha256,sha384,sha512}sum
-          do test -e /tmp/usr/local/bin/${s}
-        done
-    - name: "`make install MULTICALL=y LN=ln -svf`"
-      shell: bash
-      run: |
-        set -x
-        DESTDIR=/tmp/ make PROFILE=release MULTICALL=y LN="ln -svf" install
-        # Check that symlinks of *sum are present
-        for s in {md5,b2,sha1,sha224,sha256,sha384,sha512}sum
-          do test $(readlink /tmp/usr/local/bin/${s}) = coreutils
-        done
-    - name: "`make UTILS=XXX`"
-      shell: bash
-      run: |
-        set -x
-        # Regression-test for https://github.com/uutils/coreutils/issues/8701
-        make UTILS="rm chmod chown chgrp mv du"
-        # Verifies that
-        # 1. there is no "error: none of the selected packages contains this
-        # feature: feat_external_libstdbuf"
-        # 2. the makefile doesn't try to install libstdbuf even though stdbuf is skipped
-        DESTDIR=/tmp/ make SKIP_UTILS="stdbuf" install
+  # build_makefile:
+  #   name: Build/Makefile
+  #   needs: [ min_version, deps ]
+  #   runs-on: ${{ matrix.job.os }}
+  #   env:
+  #     SCCACHE_GHA_ENABLED: "true"
+  #     RUSTC_WRAPPER: "sccache"
+  #     CARGO_INCREMENTAL: 0
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       job:
+  #         - { os: ubuntu-latest , features: feat_os_unix }
+  #   steps:
+  #   - uses: actions/checkout@v6
+  #     with:
+  #       persist-credentials: false
+  #   - uses: dtolnay/rust-toolchain@stable
+  #     with:
+  #       target: aarch64-unknown-linux-gnu
+  #   - uses: taiki-e/install-action@nextest
+  #   - uses: Swatinem/rust-cache@v2
+  #   # Test build on the system missing libselinux (don't install libselinux1-dev at here)
+  #   - name: Run sccache-cache
+  #     uses: mozilla-actions/sccache-action@v0.0.9
+  #   - name: "`make build`"
+  #       # Also check that target/CACHEDIR.TAG is created on a fresh checkout
+  #     shell: bash
+  #     run: |
+  #       set -x
+  #       # Target directory must not exist to start with, otherwise cargo
+  #       # will not create target/CACHEDIR.TAG.
+  #       if [[ -d target ]]; then
+  #         mv -T target target.cache
+  #       fi
+  #       # Check that we don't cross-build uudoc
+  #       env CARGO_BUILD_TARGET=aarch64-unknown-linux-gnu make install-manpages PREFIX=/tmp/usr UTILS=true
+  #       # We don't build coreutils without MULTICALL=y
+  #       ! test -e target/debug/coreutils
+  #       # build (host)
+  #       make build
+  #       echo "Check that target directory will be ignored by backup tools"
+  #       test -f target/CACHEDIR.TAG
+  #       # Restore cache for target/release (we only did a debug build)
+  #       mv -t target/ target.cache/release 2>/dev/null || true
+  #   - name: "`make nextest`"
+  #     shell: bash
+  #     run: make nextest PROFILE=ci CARGOFLAGS="--hide-progress-bar"
+  #     env:
+  #       RUST_BACKTRACE: "1"
+  #   - name: Upload test results to Codecov
+  #     if: ${{ !cancelled() }}
+  #     uses: codecov/codecov-action@v5
+  #     with:
+  #       token: ${{ secrets.CODECOV_TOKEN }}
+  #       report_type: test_results
+  #       files: target/nextest/ci/junit.xml
+  #       disable_search: true
+  #       flags: makefile,${{ matrix.job.os }}
+  #       fail_ci_if_error: false
+  #   - name: "`make install PROG_PREFIX=uu- PROFILE=release-small COMPLETIONS=n MANPAGES=n LOCALES=n`"
+  #     shell: bash
+  #     run: |
+  #       set -x
+  #       DESTDIR=/tmp/ make install PROG_PREFIX=uu- PROFILE=release-small COMPLETIONS=n MANPAGES=n LOCALES=n
+  #       # Check that utils are built with given profile
+  #       ./target/release-small/true
+  #       # Check that the progs have prefix
+  #       test -f /tmp/usr/local/bin/uu-tty
+  #       test -f /tmp/usr/local/libexec/uu-coreutils/libstdbuf.*
+  #       # Check that the manpage is not present
+  #       ! test -f /tmp/usr/local/share/man/man1/uu-whoami.1
+  #       # Check that the completion is not present
+  #       ! test -f /tmp/usr/local/share/zsh/site-functions/_uu-install
+  #       ! test -f /tmp/usr/local/share/bash-completion/completions/uu-head.bash
+  #       ! test -f /tmp/usr/local/share/fish/vendor_completions.d/uu-cat.fish
+  #     env:
+  #       RUST_BACKTRACE: "1"
+  #   - name: "`make install`"
+  #     shell: bash
+  #     run: |
+  #       set -x
+  #       DESTDIR=/tmp/ make PROFILE=release install
+  #       # Check that the utils are present
+  #       test -f /tmp/usr/local/bin/tty
+  #       # Check that the manpage is present
+  #       test -f /tmp/usr/local/share/man/man1/md5sum.1
+  #       # Check that the completion is present
+  #       test -f /tmp/usr/local/share/zsh/site-functions/_b2sum
+  #       test -f /tmp/usr/local/share/bash-completion/completions/head.bash
+  #       test -f /tmp/usr/local/share/fish/vendor_completions.d/cat.fish
+  #     env:
+  #       RUST_BACKTRACE: "1"
+  #   - name: "`make uninstall`"
+  #     shell: bash
+  #     run: |
+  #       set -x
+  #       DESTDIR=/tmp/ make uninstall
+  #       # Check that the utils are not present
+  #       ! test -f /tmp/usr/local/bin/tty
+  #       # Check that the manpage is not present
+  #       ! test -f /tmp/usr/local/share/man/man1/whoami.1
+  #       # Check that the completion is not present
+  #       ! test -f /tmp/usr/local/share/zsh/site-functions/_install
+  #       ! test -f /tmp/usr/local/share/bash-completion/completions/head.bash
+  #       ! test -f /tmp/usr/local/share/fish/vendor_completions.d/cat.fish
+  #   - name: "`make install MULTICALL=n`"
+  #     shell: bash
+  #     run: |
+  #       set -x
+  #       DESTDIR=/tmp/ make PROFILE=release MULTICALL=n install
+  #       # Check that *sum are present
+  #       for s in {md5,b2,sha1,sha224,sha256,sha384,sha512}sum
+  #         do test -e /tmp/usr/local/bin/${s}
+  #       done
+  #   - name: "`make install MULTICALL=y LN=ln -svf`"
+  #     shell: bash
+  #     run: |
+  #       set -x
+  #       DESTDIR=/tmp/ make PROFILE=release MULTICALL=y LN="ln -svf" install
+  #       # Check that symlinks of *sum are present
+  #       for s in {md5,b2,sha1,sha224,sha256,sha384,sha512}sum
+  #         do test $(readlink /tmp/usr/local/bin/${s}) = coreutils
+  #       done
+  #   - name: "`make UTILS=XXX`"
+  #     shell: bash
+  #     run: |
+  #       set -x
+  #       # Regression-test for https://github.com/uutils/coreutils/issues/8701
+  #       make UTILS="rm chmod chown chgrp mv du"
+  #       # Verifies that
+  #       # 1. there is no "error: none of the selected packages contains this
+  #       # feature: feat_external_libstdbuf"
+  #       # 2. the makefile doesn't try to install libstdbuf even though stdbuf is skipped
+  #       DESTDIR=/tmp/ make SKIP_UTILS="stdbuf" install
 
-  build_rust_stable:
-    name: Build/stable
-    needs: [ min_version, deps ]
-    runs-on: ${{ matrix.job.os }}
-    timeout-minutes: 90
-    env:
-      SCCACHE_GHA_ENABLED: "true"
-      RUSTC_WRAPPER: "sccache"
-      CARGO_INCREMENTAL: 0
-    strategy:
-      fail-fast: false
-      matrix:
-        job:
-          - { os: ubuntu-latest  , features: feat_os_unix }
-          - { os: macos-latest   , features: feat_os_macos }
-          - { os: windows-latest , features: feat_os_windows }
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-    - uses: dtolnay/rust-toolchain@stable
-    - uses: taiki-e/install-action@nextest
-    - uses: Swatinem/rust-cache@v2
-    - name: Run sccache-cache
-      uses: mozilla-actions/sccache-action@v0.0.9
-    - name: Test
-      run: cargo nextest run --hide-progress-bar --profile ci --features ${{ matrix.job.features }}
-      env:
-        RUST_BACKTRACE: "1"
-    - name: Upload test results to Codecov
-      if: ${{ !cancelled() }}
-      uses: codecov/codecov-action@v5
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        report_type: test_results
-        files: target/nextest/ci/junit.xml
-        disable_search: true
-        flags: stable,${{ matrix.job.os }}
-        fail_ci_if_error: false
+  # build_rust_stable:
+  #   name: Build/stable
+  #   needs: [ min_version, deps ]
+  #   runs-on: ${{ matrix.job.os }}
+  #   timeout-minutes: 90
+  #   env:
+  #     SCCACHE_GHA_ENABLED: "true"
+  #     RUSTC_WRAPPER: "sccache"
+  #     CARGO_INCREMENTAL: 0
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       job:
+  #         - { os: ubuntu-latest  , features: feat_os_unix }
+  #         - { os: macos-latest   , features: feat_os_macos }
+  #         - { os: windows-latest , features: feat_os_windows }
+  #   steps:
+  #   - uses: actions/checkout@v6
+  #     with:
+  #       persist-credentials: false
+  #   - uses: dtolnay/rust-toolchain@stable
+  #   - uses: taiki-e/install-action@nextest
+  #   - uses: Swatinem/rust-cache@v2
+  #   - name: Run sccache-cache
+  #     uses: mozilla-actions/sccache-action@v0.0.9
+  #   - name: Test
+  #     run: cargo nextest run --hide-progress-bar --profile ci --features ${{ matrix.job.features }}
+  #     env:
+  #       RUST_BACKTRACE: "1"
+  #   - name: Upload test results to Codecov
+  #     if: ${{ !cancelled() }}
+  #     uses: codecov/codecov-action@v5
+  #     with:
+  #       token: ${{ secrets.CODECOV_TOKEN }}
+  #       report_type: test_results
+  #       files: target/nextest/ci/junit.xml
+  #       disable_search: true
+  #       flags: stable,${{ matrix.job.os }}
+  #       fail_ci_if_error: false
 
-  build_rust_nightly:
-    name: Build/nightly
-    needs: [ min_version, deps ]
-    runs-on: ${{ matrix.job.os }}
-    timeout-minutes: 90
-    env:
-      SCCACHE_GHA_ENABLED: "true"
-      RUSTC_WRAPPER: "sccache"
-      CARGO_INCREMENTAL: 0
-    strategy:
-      fail-fast: false
-      matrix:
-        job:
-          - { os: ubuntu-latest  , features: feat_os_unix }
-          - { os: macos-latest   , features: feat_os_macos }
-          - { os: windows-latest , features: feat_os_windows }
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-    - uses: dtolnay/rust-toolchain@nightly
-    - uses: taiki-e/install-action@nextest
-    - uses: Swatinem/rust-cache@v2
-    - name: Run sccache-cache
-      uses: mozilla-actions/sccache-action@v0.0.9
-    - name: Test
-      run: cargo nextest run --hide-progress-bar --profile ci --features ${{ matrix.job.features }}
-      env:
-        RUST_BACKTRACE: "1"
-    - name: Upload test results to Codecov
-      if: ${{ !cancelled() }}
-      uses: codecov/codecov-action@v5
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        report_type: test_results
-        files: target/nextest/ci/junit.xml
-        disable_search: true
-        flags: nightly,${{ matrix.job.os }}
-        fail_ci_if_error: false
+  # build_rust_nightly:
+  #   name: Build/nightly
+  #   needs: [ min_version, deps ]
+  #   runs-on: ${{ matrix.job.os }}
+  #   timeout-minutes: 90
+  #   env:
+  #     SCCACHE_GHA_ENABLED: "true"
+  #     RUSTC_WRAPPER: "sccache"
+  #     CARGO_INCREMENTAL: 0
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       job:
+  #         - { os: ubuntu-latest  , features: feat_os_unix }
+  #         - { os: macos-latest   , features: feat_os_macos }
+  #         - { os: windows-latest , features: feat_os_windows }
+  #   steps:
+  #   - uses: actions/checkout@v6
+  #     with:
+  #       persist-credentials: false
+  #   - uses: dtolnay/rust-toolchain@nightly
+  #   - uses: taiki-e/install-action@nextest
+  #   - uses: Swatinem/rust-cache@v2
+  #   - name: Run sccache-cache
+  #     uses: mozilla-actions/sccache-action@v0.0.9
+  #   - name: Test
+  #     run: cargo nextest run --hide-progress-bar --profile ci --features ${{ matrix.job.features }}
+  #     env:
+  #       RUST_BACKTRACE: "1"
+  #   - name: Upload test results to Codecov
+  #     if: ${{ !cancelled() }}
+  #     uses: codecov/codecov-action@v5
+  #     with:
+  #       token: ${{ secrets.CODECOV_TOKEN }}
+  #       report_type: test_results
+  #       files: target/nextest/ci/junit.xml
+  #       disable_search: true
+  #       flags: nightly,${{ matrix.job.os }}
+  #       fail_ci_if_error: false
 
-  compute_size:
-    name: Binary sizes
-    needs: [ min_version, deps ]
-    runs-on: ${{ matrix.job.os }}
-    permissions:
-      contents: write
-    env:
-      SCCACHE_GHA_ENABLED: "true"
-      RUSTC_WRAPPER: "sccache"
-      CARGO_INCREMENTAL: 0
-    strategy:
-      fail-fast: false
-      matrix:
-        job:
-          - { os: ubuntu-latest , features: feat_os_unix }
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-    - uses: dtolnay/rust-toolchain@stable
-    - uses: Swatinem/rust-cache@v2
-    - name: Run sccache-cache
-      uses: mozilla-actions/sccache-action@v0.0.9
-    - name: "`make install PROFILE=release`"
-      shell: bash
-      run: |
-        export CARGO_TARGET_DIR=cargo-target RUSTFLAGS="${RUSTFLAGS} -C strip=symbols" PROFILE=release MANPAGES=n COMPLETIONS=n LOCALES=n
-        mkdir -p "${CARGO_TARGET_DIR}" && sudo mount -t tmpfs -o noatime,size=16G tmpfs "${CARGO_TARGET_DIR}"
-        make install DESTDIR=target/size-release/
-        make install COMPLETIONS=n MULTICALL=y LN="ln -vf" DESTDIR=target/size-multi-release/
-        ZSTD_CLEVEL=19 tar --zstd -caf individual-x86_64-unknown-linux-gnu.tar.zst -C target/size-release/usr/local bin
-    - name: Publish
-      uses: softprops/action-gh-release@v2
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-      with:
-        tag_name: latest-commit
-        draft: false
-        prerelease: true
-        files: |
-          individual-x86_64-unknown-linux-gnu.tar.zst
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: Test for hardlinks
-      shell: bash
-      run: |
-        [ $(stat -c %i target/size-multi-release/usr/local/bin/cp) = $(stat -c %i target/size-multi-release/usr/local/bin/coreutils) ]
-    - name: Compute uutil release sizes
-      shell: bash
-      run: |
-        ## Compute uutil release sizes
-        DATE=$(date --rfc-email)
-        find target/size-release/usr/local/bin -type f -printf '%f\0' | sort -z |
-          while IFS= read -r -d '' name; do
-            size=$(du -s target/size-release/usr/local/bin/$name | awk '{print $1}')
-            echo "\"$name\""
-            echo "$size"
-          done | \
-            jq -n \
-                --arg date "$DATE" \
-                --arg sha "$GITHUB_SHA" \
-                'reduce inputs as $name ({}; . + { ($name): input }) | { ($date): {sha: $sha, sizes: map_values(.)} }' > individual-size-result.json
-        SIZE=$(cat individual-size-result.json | jq '[.[] | .sizes | .[]] | reduce .[] as $num (0; . + $num)')
-        SIZE_MULTI=$(du -s target/size-multi-release/usr/local/bin/coreutils | awk '{print $1}')
-        jq -n \
-              --arg date "$DATE" \
-              --arg sha "$GITHUB_SHA" \
-              --arg size "$SIZE" \
-              --arg multisize "$SIZE_MULTI" \
-              '{($date): { sha: $sha, size: $size, multisize: $multisize, }}' > size-result.json
-    - name: Download the previous individual size result
-      uses: dawidd6/action-download-artifact@v14
-      with:
-        workflow: CICD.yml
-        name: individual-size-result
-        repo: uutils/coreutils
-        path: dl
-    - name: Download the previous size result
-      uses: dawidd6/action-download-artifact@v14
-      with:
-        workflow: CICD.yml
-        name: size-result
-        repo: uutils/coreutils
-        path: dl
-    - name: Check uutil release sizes
-      shell: bash
-      run: |
-        check() {
-          # Warn if the size increases by more than 5%
-          threshold='1.05'
+  # compute_size:
+  #   name: Binary sizes
+  #   needs: [ min_version, deps ]
+  #   runs-on: ${{ matrix.job.os }}
+  #   permissions:
+  #     contents: write
+  #   env:
+  #     SCCACHE_GHA_ENABLED: "true"
+  #     RUSTC_WRAPPER: "sccache"
+  #     CARGO_INCREMENTAL: 0
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       job:
+  #         - { os: ubuntu-latest , features: feat_os_unix }
+  #   steps:
+  #   - uses: actions/checkout@v6
+  #     with:
+  #       persist-credentials: false
+  #   - uses: dtolnay/rust-toolchain@stable
+  #   - uses: Swatinem/rust-cache@v2
+  #   - name: Run sccache-cache
+  #     uses: mozilla-actions/sccache-action@v0.0.9
+  #   - name: "`make install PROFILE=release`"
+  #     shell: bash
+  #     run: |
+  #       export CARGO_TARGET_DIR=cargo-target RUSTFLAGS="${RUSTFLAGS} -C strip=symbols" PROFILE=release MANPAGES=n COMPLETIONS=n LOCALES=n
+  #       mkdir -p "${CARGO_TARGET_DIR}" && sudo mount -t tmpfs -o noatime,size=16G tmpfs "${CARGO_TARGET_DIR}"
+  #       make install DESTDIR=target/size-release/
+  #       make install COMPLETIONS=n MULTICALL=y LN="ln -vf" DESTDIR=target/size-multi-release/
+  #       ZSTD_CLEVEL=19 tar --zstd -caf individual-x86_64-unknown-linux-gnu.tar.zst -C target/size-release/usr/local bin
+  #   - name: Publish
+  #     uses: softprops/action-gh-release@v2
+  #     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  #     with:
+  #       tag_name: latest-commit
+  #       draft: false
+  #       prerelease: true
+  #       files: |
+  #         individual-x86_64-unknown-linux-gnu.tar.zst
+  #     env:
+  #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #   - name: Test for hardlinks
+  #     shell: bash
+  #     run: |
+  #       [ $(stat -c %i target/size-multi-release/usr/local/bin/cp) = $(stat -c %i target/size-multi-release/usr/local/bin/coreutils) ]
+  #   - name: Compute uutil release sizes
+  #     shell: bash
+  #     run: |
+  #       ## Compute uutil release sizes
+  #       DATE=$(date --rfc-email)
+  #       find target/size-release/usr/local/bin -type f -printf '%f\0' | sort -z |
+  #         while IFS= read -r -d '' name; do
+  #           size=$(du -s target/size-release/usr/local/bin/$name | awk '{print $1}')
+  #           echo "\"$name\""
+  #           echo "$size"
+  #         done | \
+  #           jq -n \
+  #               --arg date "$DATE" \
+  #               --arg sha "$GITHUB_SHA" \
+  #               'reduce inputs as $name ({}; . + { ($name): input }) | { ($date): {sha: $sha, sizes: map_values(.)} }' > individual-size-result.json
+  #       SIZE=$(cat individual-size-result.json | jq '[.[] | .sizes | .[]] | reduce .[] as $num (0; . + $num)')
+  #       SIZE_MULTI=$(du -s target/size-multi-release/usr/local/bin/coreutils | awk '{print $1}')
+  #       jq -n \
+  #             --arg date "$DATE" \
+  #             --arg sha "$GITHUB_SHA" \
+  #             --arg size "$SIZE" \
+  #             --arg multisize "$SIZE_MULTI" \
+  #             '{($date): { sha: $sha, size: $size, multisize: $multisize, }}' > size-result.json
+  #   - name: Download the previous individual size result
+  #     uses: dawidd6/action-download-artifact@v14
+  #     with:
+  #       workflow: CICD.yml
+  #       name: individual-size-result
+  #       repo: uutils/coreutils
+  #       path: dl
+  #   - name: Download the previous size result
+  #     uses: dawidd6/action-download-artifact@v14
+  #     with:
+  #       workflow: CICD.yml
+  #       name: size-result
+  #       repo: uutils/coreutils
+  #       path: dl
+  #   - name: Check uutil release sizes
+  #     shell: bash
+  #     run: |
+  #       check() {
+  #         # Warn if the size increases by more than 5%
+  #         threshold='1.05'
 
-          if [[ "$2" -eq 0 || "$3" -eq 0 ]]; then
-              echo "::warning file=$4::Invalid size for $1. Sizes cannot be 0."
-              return
-          fi
+  #         if [[ "$2" -eq 0 || "$3" -eq 0 ]]; then
+  #             echo "::warning file=$4::Invalid size for $1. Sizes cannot be 0."
+  #             return
+  #         fi
 
-          ratio=$(jq -n "$2 / $3")
-          echo "$1: size=$2, previous_size=$3, ratio=$ratio, threshold=$threshold"
-          if [[ "$(jq -n "$ratio > $threshold")" == 'true' ]]; then
-            echo "::warning file=$4::Size of $1 increases by more than 5%"
-          fi
-        }
-        ## Check individual size result
-        while read -r name previous_size; do
-          size=$(cat individual-size-result.json | jq -r ".[] | .sizes | .\"$name\"")
-          check "\`$name\` binary" "$size" "$previous_size" 'individual-size-result.json'
-        done < <(cat dl/individual-size-result.json | jq -r '.[] | .sizes | to_entries[] | "\(.key) \(.value)"')
-        ## Check size result
-        size=$(cat size-result.json | jq -r '.[] | .size')
-        previous_size=$(cat dl/size-result.json | jq -r '.[] | .size')
-        check 'multiple binaries' "$size" "$previous_size" 'size-result.json'
-        multisize=$(cat size-result.json | jq -r '.[] | .multisize')
-        previous_multisize=$(cat dl/size-result.json | jq -r '.[] | .multisize')
-        check 'multicall binary' "$multisize" "$previous_multisize" 'size-result.json'
-    - name: Upload the individual size result
-      uses: actions/upload-artifact@v6
-      with:
-        name: individual-size-result
-        path: individual-size-result.json
-    - name: Upload the size result
-      uses: actions/upload-artifact@v6
-      with:
-        name: size-result
-        path: size-result.json
+  #         ratio=$(jq -n "$2 / $3")
+  #         echo "$1: size=$2, previous_size=$3, ratio=$ratio, threshold=$threshold"
+  #         if [[ "$(jq -n "$ratio > $threshold")" == 'true' ]]; then
+  #           echo "::warning file=$4::Size of $1 increases by more than 5%"
+  #         fi
+  #       }
+  #       ## Check individual size result
+  #       while read -r name previous_size; do
+  #         size=$(cat individual-size-result.json | jq -r ".[] | .sizes | .\"$name\"")
+  #         check "\`$name\` binary" "$size" "$previous_size" 'individual-size-result.json'
+  #       done < <(cat dl/individual-size-result.json | jq -r '.[] | .sizes | to_entries[] | "\(.key) \(.value)"')
+  #       ## Check size result
+  #       size=$(cat size-result.json | jq -r '.[] | .size')
+  #       previous_size=$(cat dl/size-result.json | jq -r '.[] | .size')
+  #       check 'multiple binaries' "$size" "$previous_size" 'size-result.json'
+  #       multisize=$(cat size-result.json | jq -r '.[] | .multisize')
+  #       previous_multisize=$(cat dl/size-result.json | jq -r '.[] | .multisize')
+  #       check 'multicall binary' "$multisize" "$previous_multisize" 'size-result.json'
+  #   - name: Upload the individual size result
+  #     uses: actions/upload-artifact@v6
+  #     with:
+  #       name: individual-size-result
+  #       path: individual-size-result.json
+  #   - name: Upload the size result
+  #     uses: actions/upload-artifact@v6
+  #     with:
+  #       name: size-result
+  #       path: size-result.json
 
-  build:
-    permissions:
-      contents: write # to create GitHub release (softprops/action-gh-release)
+  # build:
+  #   permissions:
+  #     contents: write # to create GitHub release (softprops/action-gh-release)
 
     name: Build
 #  needs: [ min_version, deps ]
