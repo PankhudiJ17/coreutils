@@ -823,17 +823,17 @@ jobs:
       if: steps.vars.outputs.CARGO_CMD == 'redoxer'
       with:
         tool: redoxer@0.2.56
-    - name: Initialize toolchain-dependent workflow variables
-      id: dep_vars
-      shell: bash
-      run: |
-        ## Dependent VARs setup
-        outputs() { step_id="${{ github.action }}"; for var in "$@" ; do echo steps.${step_id}.outputs.${var}="${!var}"; echo "${var}=${!var}" >> $GITHUB_OUTPUT; done; }
-        # * determine sub-crate utility list
-        UTILITY_LIST="$(./util/show-utils.sh ${{ steps.vars.outputs.CARGO_FEATURES_OPTION }})"
-        echo UTILITY_LIST=${UTILITY_LIST}
-        CARGO_UTILITY_LIST_OPTIONS="$(for u in ${UTILITY_LIST}; do echo -n "-puu_${u} "; done;)"
-        outputs CARGO_UTILITY_LIST_OPTIONS
+    # - name: Initialize toolchain-dependent workflow variables
+    #   id: dep_vars
+    #   shell: bash
+    #   run: |
+    #     ## Dependent VARs setup
+    #     outputs() { step_id="${{ github.action }}"; for var in "$@" ; do echo steps.${step_id}.outputs.${var}="${!var}"; echo "${var}=${!var}" >> $GITHUB_OUTPUT; done; }
+    #     # * determine sub-crate utility list
+    #     UTILITY_LIST="$(./util/show-utils.sh ${{ steps.vars.outputs.CARGO_FEATURES_OPTION }})"
+    #     echo UTILITY_LIST=${UTILITY_LIST}
+    #     CARGO_UTILITY_LIST_OPTIONS="$(for u in ${UTILITY_LIST}; do echo -n "-puu_${u} "; done;)"
+    #     outputs CARGO_UTILITY_LIST_OPTIONS
     - name: Info
       shell: bash
       run: |
