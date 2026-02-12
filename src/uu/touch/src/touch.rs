@@ -581,9 +581,9 @@ fn update_times(
 
     if opts.no_deref && !is_stdout {
         set_symlink_file_times(path, atime, mtime)
-    } else {
-        set_file_times(path, atime, mtime)
-    }
+    // } else {
+    //     set_file_times(path, atime, mtime)
+    // }
     } else {    
         #[cfg(all(target_os = "linux", target_arch = "powerpc64"))]
         {
