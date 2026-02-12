@@ -387,7 +387,7 @@ pub fn touch(files: &[InputFile], opts: &Options) -> Result<(), TouchError> {
                     now = timestamp_to_filetime(Timestamp::now());
                 }
             }
-            #[cfg(not(target_os = "linux"))]
+            #[cfg(any(not(target_os = "linux"), target_arch = "powerpc64"))]
             {
                 now = timestamp_to_filetime(Timestamp::now());
             }
