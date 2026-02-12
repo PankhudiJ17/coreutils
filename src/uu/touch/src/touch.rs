@@ -21,6 +21,7 @@ use std::fs::{self, File};
 use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
+#[cfg(all(target_os = "linux", target_arch = "powerpc64"))]
 use std::os::unix::ffi::OsStrExt;
 use uucore::display::Quotable;
 use uucore::error::{FromIo, UResult, USimpleError};
