@@ -376,19 +376,20 @@ pub fn touch(files: &[InputFile], opts: &Options) -> Result<(), TouchError> {
             (atime, mtime)
         }
         Source::Now => {
-             //let now: FileTime;
-            // #[cfg(target_os = "linux")]
-            // {
-            //     if opts.date.is_none() {
-            //         now = FileTime::from_unix_time(0, libc::UTIME_NOW as u32);
-            //     } else {
-            //         now = timestamp_to_filetime(Timestamp::now());
-            //     }
-            // }
-            //#[cfg(not(target_os = "linux"))]
-           // {
-             let now = timestamp_to_filetime(Timestamp::now());
-            //}
+            let now: FileTime;
+           // #[cfg(target_os = "linux")]
+            #[cfg(all(target_os = "linux", not(target_arch = "powerpc64")))]
+            {
+                if opts.date.is_none() {
+                    now = FileTime::from_unix_time(0, libc::UTIME_NOW as u32);
+                } else {
+                    now = timestamp_to_filetime(Timestamp::now());
+                }
+            }
+            #[cfg(not(target_os = "linux"))]
+            {
+                now = timestamp_to_filetime(Timestamp::now());
+            }
             (now, now)
         }
         &Source::Timestamp(ts) => (ts, ts),
