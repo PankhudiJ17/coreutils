@@ -378,8 +378,8 @@ pub fn touch(files: &[InputFile], opts: &Options) -> Result<(), TouchError> {
         }
         Source::Now => {
             let now: FileTime;
-           // #[cfg(target_os = "linux")]
-            #[cfg(all(target_os = "linux", not(target_arch = "powerpc64")))]
+            #[cfg(target_os = "linux")]
+           // #[cfg(all(target_os = "linux", not(target_arch = "powerpc64")))]
             {
                 if opts.date.is_none() {
                     now = FileTime::from_unix_time(0, libc::UTIME_NOW as u32);
@@ -387,7 +387,8 @@ pub fn touch(files: &[InputFile], opts: &Options) -> Result<(), TouchError> {
                     now = timestamp_to_filetime(Timestamp::now());
                 }
             }
-            #[cfg(any(not(target_os = "linux"), target_arch = "powerpc64"))]
+            //#[cfg(any(not(target_os = "linux"), target_arch = "powerpc64"))]
+            #[cfg(not(target_os = "linux"))]
             {
                 now = timestamp_to_filetime(Timestamp::now());
             }
@@ -583,6 +584,41 @@ fn update_times(
     } else {
         set_file_times(path, atime, mtime)
     }
+    } else {
+        
+    #[cfg(all(target_os = "linux", target_arch = "powerpc64"))]
+    {
+        use std::ffi::CString;
+        use std::unix::ffi::OsStrExt;
+        use libc::{timespec, utimensat, AT_FDCWD};
+
+        let path_c = CString::new(path.as_os_str().as_bytes()).unwrap();
+
+        let times = [
+            timespec {
+                tv_sec: atime.seconds() as libc::time_t,
+                tv_nsec: atime.nanoseconds() as libc::c_long,
+            },
+            timespec {
+                tv_sec: mtime.seconds() as libc::time_t,
+                tv_nsec: mtime.nanoseconds() as libc::c_long,
+            },
+        ];
+
+        let ret = unsafe { utimensat(AT_FDCWD, path_c.as_ptr(), times.as_ptr(), 0) };
+
+        if ret != 0 {
+            return Err(std::last_os_error().into());
+        }
+
+        Ok(())
+    }
+
+    #[cfg(not(all(target_os = "linux", target_arch = "powerpc64")))]
+    {
+        set_file_times(path, atime, mtime)
+    }
+
     .map_err_context(|| translate!("touch-error-setting-times-of-path", "path" => path.quote()))
 }
 
