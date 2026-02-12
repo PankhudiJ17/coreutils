@@ -617,7 +617,7 @@ fn update_times(
         {
             set_file_times(path, atime, mtime)
         }
-
+    } 
     .map_err_context(|| translate!("touch-error-setting-times-of-path", "path" => path.quote()))
 }
 
