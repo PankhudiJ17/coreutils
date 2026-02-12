@@ -585,38 +585,38 @@ fn update_times(
     //     set_file_times(path, atime, mtime)
     // }
     } else {    
-        #[cfg(all(target_os = "linux", target_arch = "powerpc64"))]
-        {
-            use std::ffi::CString;
-            use std::unix::ffi::OsStrExt;
-            use libc::{timespec, utimensat, AT_FDCWD};
+        #[cfg(all(target_os = "linux", target_arch = "powerpc64"))]
+        {
+            use std::ffi::CString;
+            use std::unix::ffi::OsStrExt;
+            use libc::{timespec, utimensat, AT_FDCWD};
 
-            let path_c = CString::new(path.as_os_str().as_bytes()).unwrap();
+            let path_c = CString::new(path.as_os_str().as_bytes()).unwrap();
 
-            let times = [
-                timespec {
-                    tv_sec: atime.seconds() as libc::time_t,
-                    tv_nsec: atime.nanoseconds() as libc::c_long,
-                },
-                timespec {
-                    tv_sec: mtime.seconds() as libc::time_t,
-                    tv_nsec: mtime.nanoseconds() as libc::c_long,
-                },
-            ];
+            let times = [
+                timespec {
+                    tv_sec: atime.seconds() as libc::time_t,
+                    tv_nsec: atime.nanoseconds() as libc::c_long,
+                },
+                timespec {
+                    tv_sec: mtime.seconds() as libc::time_t,
+                    tv_nsec: mtime.nanoseconds() as libc::c_long,
+                },
+            ];
 
-            let ret = unsafe { utimensat(AT_FDCWD, path_c.as_ptr(), times.as_ptr(), 0) };
+            let ret = unsafe { utimensat(AT_FDCWD, path_c.as_ptr(), times.as_ptr(), 0) };
 
-            if ret != 0 {
-                return Err(std::last_os_error().into());
-            }   
+            if ret != 0 {
+                return Err(std::last_os_error().into());
+            }   
 
-            Ok(())
-        }
+            Ok(())
+        }
 
-        #[cfg(not(all(target_os = "linux", target_arch = "powerpc64")))]
-        {
-            set_file_times(path, atime, mtime)
-        }
+        #[cfg(not(all(target_os = "linux", target_arch = "powerpc64")))]
+        {
+            set_file_times(path, atime, mtime)
+        }
 
     .map_err_context(|| translate!("touch-error-setting-times-of-path", "path" => path.quote()))
 }
