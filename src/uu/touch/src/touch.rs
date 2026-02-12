@@ -130,14 +130,21 @@ mod format {
 // }
 fn timestamp_to_filetime(ts: Timestamp) -> FileTime {
     let system_time = SystemTime::from(ts);
-    let duration = system_time
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .expect("timestamp before UNIX_EPOCH");
 
-    FileTime::from_unix_time(
-        duration.as_secs() as i64,
-        duration.subsec_nanos(),
-    )
+    match system_time.duration_since(SystemTime::UNIX_EPOCH) {
+        Ok(duration) => FileTime::from_unix_time(
+            duration.as_secs() as i64,
+            duration.subsec_nanos(),
+        ),
+        Err(err) => {
+            // Handle times before UNIX_EPOCH
+            let duration = err.duration();
+            FileTime::from_unix_time(
+                -(duration.as_secs() as i64),
+                duration.subsec_nanos(),
+            )
+        }
+    }
 }
 
 fn filetime_to_zoned(ft: &FileTime) -> Option<Zoned> {
