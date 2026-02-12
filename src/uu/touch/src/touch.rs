@@ -23,7 +23,8 @@ use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 use uucore::display::Quotable;
 use uucore::error::{FromIo, UResult, USimpleError};
-#[cfg(target_os = "linux")]
+//#[cfg(target_os = "linux")]
+#[cfg(all(target_os = "linux", not(target_arch = "powerpc64")))]
 use uucore::libc;
 use uucore::parser::shortcut_value_parser::ShortcutValueParser;
 use uucore::translate;
