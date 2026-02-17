@@ -782,7 +782,7 @@ jobs:
           ;;
           powerpc64le-unknown-linux-*)
             sudo apt-get -y update 
-            sudo apt-get -y install gcc cargo
+            sudo apt-get -y install gcc-powerpc64le-linux-gnu
           ;;
         esac
         case '${{ matrix.job.os }}' in
