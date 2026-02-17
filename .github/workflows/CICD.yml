@@ -654,7 +654,8 @@ jobs:
     - uses: Swatinem/rust-cache@v2
       with:
         key: "${{ matrix.job.os }}_${{ matrix.job.target }}"
-    - name: Run sccache-cache
+    - if: ${{ !startsWith(matrix.job.target, 'powerpc64le-') }}    
+      name: Run sccache-cache
       uses: mozilla-actions/sccache-action@v0.0.9
     - name: Initialize workflow variables
       id: vars
