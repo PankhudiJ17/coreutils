@@ -861,7 +861,7 @@ jobs:
       if: matrix.job.skip-tests != true && matrix.job.check-only != true
       shell: bash
       run: |
-        unlimit -s unlimited 
+        ulimit -s unlimited 
         cargo test test_long_input -- --nocapture
         ## Test
         # ${{ steps.vars.outputs.CARGO_CMD }} ${{ steps.vars.outputs.CARGO_CMD_OPTIONS }} test --target=${{ matrix.job.target }} \
