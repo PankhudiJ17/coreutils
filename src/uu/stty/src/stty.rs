@@ -630,7 +630,7 @@ fn print_terminal_size(
     // GNU linked against glibc 2.42 provides us baudrate 51 which panics cfgetospeed
    // #[cfg(not(target_os = "linux"))]
     //#[cfg(any(not(target_os = "linux"), target_arch = "powerpc64"))]
-    #[cfg(all(not(target_os = "linux"), target_arch = "powerpc64"))]   // trial
+    #[cfg(any(not(target_os = "linux"), target_arch = "powerpc64"))]   
     let speed = nix::sys::termios::cfgetospeed(termios);
     //#[cfg(target_os = "linux")]
     #[cfg(all(target_os = "linux", not(target_arch = "powerpc64")))]
