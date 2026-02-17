@@ -629,7 +629,8 @@ fn print_terminal_size(
 ) -> nix::Result<()> {
     // GNU linked against glibc 2.42 provides us baudrate 51 which panics cfgetospeed
    // #[cfg(not(target_os = "linux"))]
-    #[cfg(any(not(target_os = "linux"), target_arch = "powerpc64"))]
+    //#[cfg(any(not(target_os = "linux"), target_arch = "powerpc64"))]
+    #[cfg(all(not(target_os = "linux"), target_arch = "powerpc64"))]   // trial
     let speed = nix::sys::termios::cfgetospeed(termios);
     //#[cfg(target_os = "linux")]
     #[cfg(all(target_os = "linux", not(target_arch = "powerpc64")))]
@@ -646,7 +647,7 @@ fn print_terminal_size(
 
     // BSDs and Linux use a u32 for the baud rate, so we can simply print it.
 //    #[cfg(any(target_os = "linux", bsd))]
-    #[cfg(all(bsd, all(target_os = "linux", not(target_arch = "powerpc64"))))]
+    #[cfg(all(bsd, all(target_os = "linux", not(target_arch = "powerpc64"))))]    //trial
     //#[cfg(any(bsd, all(target_os = "linux", not(target_arch = "powerpc64"))))]
     printer.print(&translate!("stty-output-speed", "speed" => speed));
 
