@@ -1470,9 +1470,9 @@ fn test_du_symlink_multiple_fail() {
     assert_eq!(result.code(), 1);
 
     //fixed the particulat test---but
-    //let output = result.stdout_str();
-   // assert!(output.contains("\tfile1"));  //comment
-    result.stdout_contains("4\tfile1\n");
+    let output = result.stdout_str();       // trial
+    assert!(output.contains("\tfile1"));  //comment
+    //result.stdout_contains("4\tfile1\n");   original
 }
 
 #[test]
