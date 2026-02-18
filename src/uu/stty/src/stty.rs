@@ -648,6 +648,9 @@ fn print_terminal_size(
     // BSDs and Linux use a u32 for the baud rate, so we can simply print it.
 //    #[cfg(any(target_os = "linux", bsd))]
     //#[cfg(all(bsd, all(target_os = "linux", not(target_arch = "powerpc64"))))]    //trial
+    //#[cfg(any(bsd, all(target_os = "linux", not(target_arch = "powerpc64"))))]
+    
+   // #[cfg(all(target_os = "linux", not(target_arch = "powerpc64")))]  // accr to open/closed Pr 10744
     #[cfg(any(bsd, all(target_os = "linux", not(target_arch = "powerpc64"))))]
     printer.print(&translate!("stty-output-speed", "speed" => speed));
 
