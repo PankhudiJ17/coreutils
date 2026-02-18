@@ -1470,7 +1470,7 @@ fn test_du_symlink_multiple_fail() {
     assert_eq!(result.code(), 1);
 
     let output = result.stdout_str();
-    assert!(output.contains("\tfile1"));
+    assert!(output.contains("\tfile1"));  //comment
     //result.stdout_contains("4\tfile1\n");
 }
 
